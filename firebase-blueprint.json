@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier for the user" },
+        "email": { "type": "string", "format": "email", "description": "User's email address" },
+        "displayName": { "type": "string", "description": "User's display name" },
+        "photoURL": { "type": "string", "description": "URL to user's profile picture" },
+        "balance": { "type": "number", "description": "User's current wallet balance" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User's role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user account was created" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the user account was last updated" }
+      },
+      "required": ["uid", "email"]
+    },
+    "transactions": {
+      "title": "Transaction",
+      "description": "Financial transaction record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "uid": { "type": "string", "description": "User ID who made the transaction" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "type": { "type": "string", "enum": ["Deposit", "Withdrawal", "Payment"] },
+        "method": { "type": "string" },
+        "amount": { "type": "number" },
+        "trxId": { "type": "string", "description": "Transaction hash/ID" },
+        "status": { "type": "string", "enum": ["Pending", "Completed", "Cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "type", "amount", "status", "createdAt"]
+    },
+    "orders": {
+      "title": "Order",
+      "description": "Service order record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "serviceId": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "category": { "type": "string" },
+        "link": { "type": "string" },
+        "quantity": { "type": "number" },
+        "cost": { "type": "number" },
+        "status": { "type": "string", "enum": ["Processing", "Completed", "Cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "serviceId", "quantity", "cost", "status", "createdAt"]
+    },
+    "tickets": {
+      "title": "Support Ticket",
+      "description": "User support request",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "subject": { "type": "string" },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "message": { "type": "string" },
+        "attachmentUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "Replied", "Closed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "replies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string" },
+              "sender": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "required": ["uid", "subject", "priority", "message", "status", "createdAt"]
+    },
+    "payment_methods": {
+      "title": "Payment Method",
+      "description": "Crypto payment network details",
+      "type": "object",
+      "properties": {
+        "networkName": { "type": "string", "description": "e.g., TRC20, BEP20" },
+        "walletAddress": { "type": "string" },
+        "iconUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["networkName", "walletAddress"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "users",
+      "description": "User profile documents"
+    },
+    "/transactions/{txId}": {
+      "schema": "transactions",
+      "description": "Global transactions collection"
+    },
+    "/orders/{orderId}": {
+      "schema": "orders",
+      "description": "Service orders collection"
+    },
+    "/tickets/{ticketId}": {
+      "schema": "tickets",
+      "description": "Support tickets collection"
+    },
+    "/payment_methods/{methodId}": {
+      "schema": "payment_methods",
+      "description": "Available crypto payment methods"
+    }
+  }
+}

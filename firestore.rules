@@ -1,0 +1,167 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required) - Unique identifier
+    //   - email: string (required, email format) - User's email
+    //   - displayName: string (optional) - User's name
+    //   - photoURL: string (optional) - Profile picture URL
+    //   - balance: number - Current wallet balance
+    //   - totalDeposit: number - Total amount deposited
+    //   - totalSpent: number - Total amount spent on orders
+    //   - createdAt: timestamp (required) - Creation time
+    //   - updatedAt: timestamp (optional) - Last update time
+    //
+    // Collection: transactions
+    // Document ID: auto-generated
+    // Fields:
+    //   - uid: string - User ID
+    //   - userEmail: string - User Email
+    //   - userName: string - User Name
+    //   - type: string (Deposit, Withdrawal, Payment)
+    //   - method: string - Payment method or order details
+    //   - amount: number - Transaction amount
+    //   - status: string (Pending, Completed, Cancelled)
+    //   - createdAt: timestamp
+    //
+    // Collection: orders
+    // Document ID: auto-generated
+    // Fields:
+    //   - uid: string - User ID
+    //   - serviceId: string - Service ID
+    //   - serviceName: string - Service Name
+    //   - link: string - Target link
+    //   - quantity: number - Order quantity
+    //   - cost: number - Total cost
+    //   - status: string (Processing, Completed, Cancelled)
+    //   - createdAt: timestamp
+    //
+    // Collection: tickets
+    // Document ID: auto-generated
+    // Fields:
+    //   - uid: string - User ID
+    //   - subject: string - Ticket subject
+    //   - priority: string (Low, Medium, High)
+    //   - message: string - Initial message
+    //   - status: string (Open, Replied, Closed)
+    //   - replies: array of objects
+    //   - createdAt: timestamp
+    //   - updatedAt: timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isAuthenticated() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             data.createdAt is timestamp &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+             (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500)) &&
+             (!('balance' in data) || data.balance is number) &&
+             (!('totalDeposit' in data) || data.totalDeposit is number) &&
+             (!('totalSpent' in data) || data.totalSpent is number);
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.email == "info.kitgizmo@gmail.com" || 
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['uid', 'type', 'amount', 'status', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.type in ['Deposit', 'Withdrawal', 'Payment'] &&
+             data.amount is number &&
+             data.status in ['Pending', 'Completed', 'Cancelled'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidTicket(data) {
+      return data.keys().hasAll(['uid', 'subject', 'priority', 'message', 'status', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.subject is string && data.subject.size() <= 200 &&
+             data.priority in ['Low', 'Medium', 'High'] &&
+             data.message is string && data.message.size() <= 5000 &&
+             data.status in ['Open', 'Replied', 'Closed'] &&
+             data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      !('role' in request.resource.data);
+      allow update: if isAdmin() || (isOwner(userId) && isValidUser(request.resource.data) && 
+                      request.resource.data.uid == resource.data.uid &&
+                      request.resource.data.createdAt == resource.data.createdAt &&
+                      request.resource.data.email == resource.data.email &&
+                      (!('role' in request.resource.data) || request.resource.data.role == resource.data.role) &&
+                      request.resource.data.get('totalDeposit', 0) == resource.data.get('totalDeposit', 0) &&
+                      math.abs((request.resource.data.get('balance', 0) + request.resource.data.get('totalSpent', 0)) - resource.data.get('totalDeposit', 0)) < 0.01);
+    }
+
+    match /transactions/{txId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid && 
+                      isValidTransaction(request.resource.data) &&
+                      (request.resource.data.status == 'Pending' || (request.resource.data.type == 'Payment' && request.resource.data.status == 'Completed'));
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid &&
+                      (request.resource.data.status == 'Pending' || request.resource.data.status == 'Processing');
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /tickets/{ticketId} {
+      allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidTicket(request.resource.data) &&
+                      request.resource.data.status == 'Open';
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.uid == request.auth.uid &&
+                      request.resource.data.uid == resource.data.uid &&
+                      request.resource.data.subject == resource.data.subject &&
+                      request.resource.data.createdAt == resource.data.createdAt);
+      allow delete: if false;
+    }
+
+    match /payment_methods/{methodId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
