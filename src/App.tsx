@@ -21,6 +21,10 @@ import {
   X,
   Star,
   ShieldCheck,
+  Shield,
+  Mail,
+  Phone,
+  MapPin,
   Clock,
   Rocket,
   LogOut,
@@ -45,7 +49,9 @@ import {
   Edit2,
   Trash2,
   Camera,
-  Upload
+  Upload,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useState, useEffect, createContext, useContext, ReactNode, FormEvent, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -161,6 +167,48 @@ function MemberRankBadge({ spent, size = "md" }: { spent: number, size?: "sm" | 
       <span>{rank.name}</span>
     </div>
   );
+}
+
+// Theme Context
+type Theme = "light" | "dark";
+
+interface ThemeContextType {
+  theme: Theme;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme") as Theme) || "light";
+    }
+    return "light";
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error("useTheme must be used within ThemeProvider");
+  return context;
 }
 
 // Auth Context
@@ -419,9 +467,11 @@ const itemVariants = {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
@@ -485,11 +535,11 @@ function ProfileForm() {
     <form onSubmit={handleUpdate} className="space-y-6">
       <div className="flex flex-col items-center gap-4 mb-6">
         <div className="relative group">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-brand-50 bg-slate-100 flex items-center justify-center">
+          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-brand-50 dark:border-brand-900/20 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
             {previewURL ? (
               <img src={previewURL} alt="Profile Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
-              <UserIcon className="w-12 h-12 text-slate-300" />
+              <UserIcon className="w-12 h-12 text-slate-300 dark:text-slate-600" />
             )}
           </div>
           <label 
@@ -654,16 +704,16 @@ function NewOrderForm({ balance, setActiveTab }: { balance: number; setActiveTab
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-display font-bold text-slate-900">New Order</h1>
-        <p className="text-slate-500">Select a service and enter your details to place a new order.</p>
+        <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">New Order</h1>
+        <p className="text-slate-500 dark:text-slate-400">Select a service and enter your details to place a new order.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Form */}
         <div className="lg:col-span-2">
-          <Card className="border-none shadow-sm bg-white">
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
             <CardHeader>
-              <CardTitle className="text-lg font-bold">Order Details</CardTitle>
+              <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Order Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <form onSubmit={handleOrder} className="space-y-6">
@@ -730,9 +780,9 @@ function NewOrderForm({ balance, setActiveTab }: { balance: number; setActiveTab
 
         {/* Right Column: Order Resume Sidebar */}
         <div className="lg:col-span-1">
-          <Card className="border-none shadow-sm bg-white sticky top-24">
-            <CardHeader className="border-b border-slate-50">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
+          <Card className="border-none shadow-sm bg-white dark:bg-slate-900 sticky top-24">
+            <CardHeader className="border-b border-slate-50 dark:border-slate-800">
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <ShoppingBag className="w-5 h-5 text-brand-600" />
                 Order Resume
               </CardTitle>
@@ -851,24 +901,24 @@ function ManageOrders() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-display font-bold text-slate-900">Manage Orders</h1>
-        <p className="text-slate-500">Track and manage your service orders in real-time.</p>
+        <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">Manage Orders</h1>
+        <p className="text-slate-500 dark:text-slate-400">Track and manage your service orders in real-time.</p>
       </div>
 
-      <Card className="border-none shadow-sm bg-white overflow-hidden">
+      <Card className="border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Order ID</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Service</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Order ID</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Service</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
               {orders.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-slate-400">
@@ -998,14 +1048,14 @@ function AddFundsForm() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-display font-bold text-slate-900">Add Funds</h1>
-        <p className="text-slate-500">Choose your preferred cryptocurrency network and enter the transaction details.</p>
+        <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">Add Funds</h1>
+        <p className="text-slate-500 dark:text-slate-400">Choose your preferred cryptocurrency network and enter the transaction details.</p>
       </div>
 
-      <Card className="border-none shadow-sm bg-white">
+      <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
         <CardHeader>
-          <CardTitle className="text-lg font-bold">Payment Details</CardTitle>
-          <CardDescription>Select a network to view the wallet address.</CardDescription>
+          <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Payment Details</CardTitle>
+          <CardDescription className="text-slate-500 dark:text-slate-400">Select a network to view the wallet address.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handlePayment} className="space-y-6">
@@ -1199,8 +1249,8 @@ function SupportTickets() {
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-display font-bold text-slate-900">Support Tickets</h1>
-          <p className="text-slate-500">Need help? Open a ticket and our team will assist you.</p>
+          <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">Support Tickets</h1>
+          <p className="text-slate-500 dark:text-slate-400">Need help? Open a ticket and our team will assist you.</p>
         </div>
         <Dialog open={isNewTicketOpen} onOpenChange={setIsNewTicketOpen}>
           <DialogTrigger render={
@@ -1248,20 +1298,20 @@ function SupportTickets() {
         </Dialog>
       </div>
 
-      <Card className="border-none shadow-sm bg-white overflow-hidden">
+      <Card className="border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Ticket ID</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Subject</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Priority</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ticket ID</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subject</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Priority</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
               {tickets.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-slate-400">No tickets found</td>
@@ -1420,24 +1470,24 @@ function Transactions() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-display font-bold text-slate-900">Transactions</h1>
-        <p className="text-slate-500">View your complete financial history and transaction status.</p>
+        <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">Transactions</h1>
+        <p className="text-slate-500 dark:text-slate-400">View your complete financial history and transaction status.</p>
       </div>
 
-      <Card className="border-none shadow-sm bg-white overflow-hidden">
+      <Card className="border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Transaction ID</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Method/Details</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Transaction ID</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Type</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Method/Details</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
               {transactions.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-12 text-center text-slate-400">
@@ -1564,16 +1614,16 @@ function PaymentSettings() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-slate-900">Payment Methods</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Payment Methods</h2>
         <Button onClick={() => setIsAdding(true)} className="bg-brand-600 hover:bg-brand-700">
           <Plus className="w-4 h-4 mr-2" /> Add New Method
         </Button>
       </div>
 
       {isAdding && (
-        <Card className="border-none shadow-sm bg-white">
+        <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
           <CardHeader>
-            <CardTitle>{editingMethod ? "Edit Method" : "Add New Crypto Method"}</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-slate-100">{editingMethod ? "Edit Method" : "Add New Crypto Method"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -1604,10 +1654,10 @@ function PaymentSettings() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {methods.map((method) => (
-          <Card key={method.id} className="border-none shadow-sm bg-white overflow-hidden group">
+          <Card key={method.id} className="border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden group">
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center shrink-0">
                   {method.iconUrl ? (
                     <img src={method.iconUrl} alt="" className="w-8 h-8 object-contain" />
                   ) : (
@@ -1615,13 +1665,13 @@ function PaymentSettings() {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900">{method.networkName}</h3>
-                  <p className="text-xs text-slate-500">Crypto Gateway</p>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100">{method.networkName}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Crypto Gateway</p>
                 </div>
               </div>
-              <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-4">
-                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Wallet Address</p>
-                <p className="text-xs font-mono text-slate-700 break-all">{method.walletAddress}</p>
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800 mb-4">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">Wallet Address</p>
+                <p className="text-xs font-mono text-slate-700 dark:text-slate-300 break-all">{method.walletAddress}</p>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEdit(method)}>
@@ -1808,15 +1858,15 @@ function AdminDashboard() {
     <div className="max-w-6xl mx-auto">
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-display font-bold text-slate-900">Admin Panel</h1>
-          <p className="text-slate-500">Manage deposits, orders, and support tickets.</p>
+          <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">Admin Panel</h1>
+          <p className="text-slate-500 dark:text-slate-400">Manage deposits, orders, and support tickets.</p>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-xl">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
           <button 
             onClick={() => setAdminTab("Deposits")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              adminTab === "Deposits" ? "bg-white text-brand-600 shadow-sm" : "text-slate-600 hover:text-brand-600"
+              adminTab === "Deposits" ? "bg-white dark:bg-slate-900 text-brand-600 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-brand-600"
             )}
           >
             Deposits
@@ -1825,7 +1875,7 @@ function AdminDashboard() {
             onClick={() => setAdminTab("Orders")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              adminTab === "Orders" ? "bg-white text-brand-600 shadow-sm" : "text-slate-600 hover:text-brand-600"
+              adminTab === "Orders" ? "bg-white dark:bg-slate-900 text-brand-600 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-brand-600"
             )}
           >
             Manage All Orders
@@ -1834,12 +1884,12 @@ function AdminDashboard() {
             onClick={() => setAdminTab("Tickets")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all relative",
-              adminTab === "Tickets" ? "bg-white text-brand-600 shadow-sm" : "text-slate-600 hover:text-brand-600"
+              adminTab === "Tickets" ? "bg-white dark:bg-slate-900 text-brand-600 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-brand-600"
             )}
           >
             Support Tickets
             {allTickets.filter(t => t.status === "Open").length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900">
                 {allTickets.filter(t => t.status === "Open").length}
               </span>
             )}
@@ -1848,7 +1898,7 @@ function AdminDashboard() {
             onClick={() => setAdminTab("Payment Settings")}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              adminTab === "Payment Settings" ? "bg-white text-brand-600 shadow-sm" : "text-slate-600 hover:text-brand-600"
+              adminTab === "Payment Settings" ? "bg-white dark:bg-slate-900 text-brand-600 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-brand-600"
             )}
           >
             Payment Settings
@@ -1859,20 +1909,20 @@ function AdminDashboard() {
       {adminTab === "Payment Settings" && <PaymentSettings />}
 
       {adminTab === "Deposits" ? (
-        <Card className="border-none shadow-sm bg-white overflow-hidden">
+        <Card className="border-none shadow-sm bg-white dark:bg-slate-900 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">User</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Provider</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">TRX ID</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                  <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                  <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">User</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Provider</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TRX ID</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                  <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {deposits.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-12 text-center text-slate-400">No pending deposits</td>
@@ -2113,6 +2163,7 @@ function AdminDashboard() {
 
 function OrderStatisticsChart() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -2179,26 +2230,26 @@ function OrderStatisticsChart() {
               <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === "dark" ? "#1e293b" : "#f1f5f9"} />
           <XAxis 
             dataKey="date" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
+            tick={{ fill: theme === "dark" ? "#64748b" : "#94a3b8", fontSize: 12 }}
             dy={10}
           />
           <YAxis 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fill: '#94a3b8', fontSize: 12 }}
+            tick={{ fill: theme === "dark" ? "#64748b" : "#94a3b8", fontSize: 12 }}
             tickFormatter={(value) => `$${value}`}
           />
           <Tooltip 
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
                 return (
-                  <div className="bg-white p-3 shadow-xl border border-slate-100 rounded-lg">
-                    <p className="text-xs font-bold text-slate-900 mb-1">{payload[0].payload.fullDate}</p>
+                  <div className="bg-white dark:bg-slate-800 p-3 shadow-xl border border-slate-100 dark:border-slate-700 rounded-lg">
+                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100 mb-1">{payload[0].payload.fullDate}</p>
                     <p className="text-sm font-bold text-brand-600">
                       ${payload[0].value?.toLocaleString(undefined, { minimumFractionDigits: 2 })} Spent
                     </p>
@@ -2215,7 +2266,7 @@ function OrderStatisticsChart() {
             strokeWidth={3}
             fillOpacity={1} 
             fill="url(#colorAmount)" 
-            dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
+            dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: theme === "dark" ? "#0f172a" : "#fff" }}
             activeDot={{ r: 6, strokeWidth: 0 }}
           />
         </AreaChart>
@@ -2226,6 +2277,7 @@ function OrderStatisticsChart() {
 
 function Dashboard() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("Dashboard");
 
@@ -2276,14 +2328,14 @@ function Dashboard() {
   }, [user, isAdmin]);
 
   const stats = [
-    { label: "Balance", value: (userData?.balance || 0).toFixed(2), icon: Wallet, color: "text-blue-600", bg: "bg-blue-50", isCurrency: true },
-    { label: "Total Spent", value: (userData?.totalSpent || 0).toFixed(2), icon: CreditCard, color: "text-purple-600", bg: "bg-purple-50", isCurrency: true },
-    { label: "Total Deposit", value: (userData?.totalDeposit || 0).toFixed(2), icon: ArrowDownCircle, color: "text-green-600", bg: "bg-green-50", isCurrency: true },
-    { label: "Total Orders", value: orders.length.toString(), icon: ShoppingBag, color: "text-orange-600", bg: "bg-orange-50" },
-    { label: "Processing", value: orders.filter(o => o.status === "Processing").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Completed", value: orders.filter(o => o.status === "Completed").length.toString(), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { label: "Refunded", value: orders.filter(o => o.status === "Cancelled").length.toString(), icon: RefreshCcw, color: "text-red-600", bg: "bg-red-50" },
-    { label: "Active Services", value: orders.filter(o => o.status === "Processing").length.toString(), icon: Zap, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { label: "Balance", value: (userData?.balance || 0).toFixed(2), icon: Wallet, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20", isCurrency: true },
+    { label: "Total Spent", value: (userData?.totalSpent || 0).toFixed(2), icon: CreditCard, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/20", isCurrency: true },
+    { label: "Total Deposit", value: (userData?.totalDeposit || 0).toFixed(2), icon: ArrowDownCircle, color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/20", isCurrency: true },
+    { label: "Total Orders", value: orders.length.toString(), icon: ShoppingBag, color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-900/20" },
+    { label: "Processing", value: orders.filter(o => o.status === "Processing").length.toString(), icon: Clock, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20" },
+    { label: "Completed", value: orders.filter(o => o.status === "Completed").length.toString(), icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+    { label: "Refunded", value: orders.filter(o => o.status === "Cancelled").length.toString(), icon: RefreshCcw, color: "text-red-600", bg: "bg-red-50 dark:bg-red-900/20" },
+    { label: "Active Services", value: orders.filter(o => o.status === "Processing").length.toString(), icon: Zap, color: "text-indigo-600", bg: "bg-indigo-50 dark:bg-indigo-900/20" },
   ];
 
   const menuItems = [
@@ -2299,7 +2351,7 @@ function Dashboard() {
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden relative">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden relative">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -2311,11 +2363,11 @@ function Dashboard() {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed inset-y-0 left-0 bg-white border-r border-slate-200 transition-all duration-300 flex flex-col z-50 lg:static",
+          "fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50 lg:static",
           sidebarOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full lg:w-20 lg:translate-x-0"
         )}
       >
-        <div className="p-6 flex items-center justify-between border-b border-slate-100">
+        <div className="p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shrink-0">
               <TrendingUp className="text-white w-5 h-5" />
@@ -2375,11 +2427,11 @@ function Dashboard() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden w-full">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0">
+        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 shrink-0">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -2388,20 +2440,27 @@ function Dashboard() {
               <input 
                 type="text" 
                 placeholder="Search services..." 
-                className="pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-brand-500/20 transition-all outline-none"
+                className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-brand-500/20 transition-all outline-none text-slate-900 dark:text-slate-100"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg relative">
+            <button 
+              onClick={toggleTheme}
+              className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+            >
+              {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
+            <button className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900" />
             </button>
             <Separator orientation="vertical" className="h-6" />
-            <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition-colors" onClick={() => setActiveTab("Profile")}>
+            <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 p-1 rounded-lg transition-colors" onClick={() => setActiveTab("Profile")}>
               <div className="text-right hidden sm:block">
-                <div className="text-sm font-bold text-slate-900">{user?.displayName || user?.email?.split('@')[0]}</div>
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100">{user?.displayName || user?.email?.split('@')[0]}</div>
                 <div className="flex justify-end">
                   <MemberRankBadge spent={userData?.totalSpent || 0} size="sm" />
                 </div>
@@ -2422,23 +2481,23 @@ function Dashboard() {
             {activeTab === "Dashboard" && (
               <>
                 <div className="mb-8">
-                  <h1 className="text-2xl font-display font-bold text-slate-900">Dashboard Overview</h1>
-                  <p className="text-slate-500">Welcome back! Here's what's happening with your account today.</p>
+                  <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">Dashboard Overview</h1>
+                  <p className="text-slate-500 dark:text-slate-400">Welcome back! Here's what's happening with your account today.</p>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
                   {stats.map((stat, idx) => (
-                    <Card key={idx} className="border-none shadow-sm hover:shadow-md transition-shadow bg-white">
+                    <Card key={idx} className="border-none shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-slate-900">
                       <CardContent className="p-4 md:p-6">
                         <div className="flex items-center gap-4">
                           <div className={cn("w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0", stat.bg)}>
                             <stat.icon className={cn("w-5 h-5 md:w-6 md:h-6", stat.color)} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs md:text-sm font-medium text-slate-500 mb-0.5 md:mb-1 truncate">{stat.label}</p>
+                            <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 mb-0.5 md:mb-1 truncate">{stat.label}</p>
                             <p className={cn(
-                              "text-lg md:text-xl font-bold text-slate-900 flex items-center gap-1",
+                              "text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1",
                               stat.isCurrency ? "font-sans" : ""
                             )}>
                               {stat.isCurrency && <span className="text-slate-400 font-normal text-base md:text-lg">$</span>}
@@ -2453,19 +2512,19 @@ function Dashboard() {
 
                 {/* Recent Activity / Charts Placeholder */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <Card className="lg:col-span-2 border-none shadow-sm bg-white">
+                  <Card className="lg:col-span-2 border-none shadow-sm bg-white dark:bg-slate-900">
                     <CardHeader>
-                      <CardTitle className="text-lg font-bold">Order Statistics</CardTitle>
-                      <CardDescription>Visual representation of your order history</CardDescription>
+                      <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Order Statistics</CardTitle>
+                      <CardDescription className="text-slate-500 dark:text-slate-400">Visual representation of your order history</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[300px] p-6 pt-0">
                       <OrderStatisticsChart />
                     </CardContent>
                   </Card>
 
-                  <Card className="border-none shadow-sm bg-white">
+                  <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
                     <CardHeader>
-                      <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
+                      <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">Quick Actions</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <Button className="w-full justify-start gap-3 bg-brand-600 hover:bg-brand-700" onClick={() => setActiveTab("New Order")}>
@@ -2603,13 +2662,14 @@ function Dashboard() {
 function AppContent() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, loading, signIn, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
-          <p className="text-slate-500 font-medium animate-pulse">Loading KIT GIZMO...</p>
+          <div className="w-12 h-12 border-4 border-brand-200 dark:border-brand-900/20 border-t-brand-600 rounded-full animate-spin" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse">Loading KIT GIZMO...</p>
         </div>
       </div>
     );
@@ -2620,23 +2680,33 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen font-sans bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
+      <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
                 <TrendingUp className="text-white w-5 h-5" />
               </div>
-              <span className="text-xl font-display font-bold tracking-tight text-brand-950">KIT GIZMO</span>
+              <span className="text-xl font-display font-bold tracking-tight text-brand-950 dark:text-white">KIT GIZMO</span>
             </div>
             
             <div className="hidden md:flex items-center gap-8">
-              <a href="#services" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">Services</a>
-              <a href="#process" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">Process</a>
-              <a href="#testimonials" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">Testimonials</a>
-              <a href="#faq" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">FAQ</a>
+              <a href="#services" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Services</a>
+              <a href="#process" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Process</a>
+              <a href="#pricing" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Pricing</a>
+              <a href="#testimonials" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Testimonials</a>
+              <a href="#faq" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">FAQ</a>
+              <a href="#contact" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Contact</a>
+              
+              <button 
+                onClick={toggleTheme}
+                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+              >
+                {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </button>
               
               {loading ? (
                 <div className="w-24 h-9 bg-slate-100 animate-pulse rounded-md" />
@@ -2673,15 +2743,27 @@ function AppContent() {
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden bg-white border-b border-slate-100 p-4 space-y-4"
+            className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-4 space-y-4"
           >
-            <a href="#services" className="block text-base font-medium text-slate-600" onClick={() => setIsMenuOpen(false)}>Services</a>
-            <a href="#process" className="block text-base font-medium text-slate-600" onClick={() => setIsMenuOpen(false)}>Process</a>
-            <a href="#testimonials" className="block text-base font-medium text-slate-600" onClick={() => setIsMenuOpen(false)}>Testimonials</a>
-            <a href="#faq" className="block text-base font-medium text-slate-600" onClick={() => setIsMenuOpen(false)}>FAQ</a>
+            <a href="#services" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Services</a>
+            <a href="#process" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Process</a>
+            <a href="#pricing" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Pricing</a>
+            <a href="#testimonials" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Testimonials</a>
+            <a href="#faq" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>FAQ</a>
+            <a href="#contact" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Contact</a>
             
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Theme</span>
+              <button 
+                onClick={toggleTheme}
+                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </button>
+            </div>
+
             {user ? (
-              <div className="pt-4 border-t border-slate-100">
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3 mb-4">
                   <img src={user.photoURL || ""} alt="" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
                   <div>
@@ -2706,30 +2788,32 @@ function AppContent() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div className="absolute inset-0 hero-gradient -z-10" />
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-white dark:bg-slate-950">
+        <div className="absolute inset-0 hero-gradient -z-10 opacity-50 dark:opacity-20" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Badge variant="outline" className="mb-4 border-brand-200 text-brand-700 bg-brand-50 px-3 py-1">
-              #1 SMM Agency Solution
+            <Badge variant="outline" className="mb-4 border-brand-200 dark:border-brand-900/30 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-3 py-1">
+              #1 SMM Agency Solution in the USA
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-slate-900 mb-6">
+            <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-slate-900 dark:text-white mb-6">
               Elevate Your <span className="text-brand-600">Social Media</span> Presence
             </h1>
-            <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
               Empowering your social media success with high-impact services, data-driven strategies, and professional management.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="bg-brand-600 hover:bg-brand-700 h-12 px-8 text-base">
-                Start Your Growth <ArrowRight className="ml-2 w-4 h-4" />
+              <Button size="lg" className="h-12 px-8 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-200 dark:shadow-none transition-all hover:scale-105">
+                Get Started Now <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base">
-                View Services
-              </Button>
+              <a href="#pricing">
+                <Button size="lg" variant="outline" className="h-12 px-8 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl">
+                  View Pricing
+                </Button>
+              </a>
             </div>
           </motion.div>
 
@@ -2753,22 +2837,83 @@ function AppContent() {
               <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-brand-200 rounded-full blur-3xl -z-10" />
             </div>
           </motion.div>
+
+          {/* Trusted By */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5, duration: 1 }}
+            className="mt-24"
+          >
+            <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.3em] mb-8">Trusted by industry leaders</p>
+            <div className="flex flex-wrap justify-center items-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+              {["TechFlow", "GlobalScale", "NextGen", "CloudNine", "PeakPerformance"].map((logo, i) => (
+                <div key={i} className="text-2xl font-display font-black text-slate-400 dark:text-slate-600 tracking-tighter">
+                  {logo}
+                </div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-brand-950 text-white">
+      <section className="py-20 bg-slate-950 dark:bg-black border-y border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 text-center">
             {[
-              { label: "Active Clients", value: "500+" },
-              { label: "Countries", value: "20+" },
-              { label: "Team Experts", value: "30+" },
-              { label: "Success Rate", value: "99%" }
+              { label: "Active Clients", value: "10k+" },
+              { label: "Orders Completed", value: "1M+" },
+              { label: "Success Rate", value: "99.9%" },
+              { label: "Support Response", value: "< 5m" }
             ].map((stat, idx) => (
-              <div key={idx} className="space-y-2">
-                <div className="text-4xl font-display font-bold text-brand-400">{stat.value}</div>
-                <div className="text-sm text-brand-200 uppercase tracking-widest font-medium">{stat.label}</div>
+              <div key={idx} className="space-y-3">
+                <div className="text-5xl font-display font-bold text-white tracking-tight">{stat.value}</div>
+                <div className="text-xs text-brand-400 uppercase tracking-[0.2em] font-bold">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-24 bg-white dark:bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <Badge variant="outline" className="mb-4 border-brand-200 dark:border-brand-900/30 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-3 py-1">
+              The KIT GIZMO Advantage
+            </Badge>
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 dark:text-white mb-6">Why Industry Leaders Trust Us</h2>
+            <p className="text-slate-600 dark:text-slate-400 text-lg">
+              We combine cutting-edge technology with human expertise to deliver results that matter.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12">
+            {[
+              {
+                title: "USA-Based Support",
+                desc: "Our dedicated support team is based in the USA, providing 24/7 assistance with local expertise.",
+                icon: <Globe className="w-8 h-8 text-brand-600" />
+              },
+              {
+                title: "Enterprise Security",
+                desc: "We prioritize your data security with military-grade encryption and secure payment gateways.",
+                icon: <Shield className="w-8 h-8 text-brand-600" />
+              },
+              {
+                title: "Proven ROI",
+                desc: "Our strategies are data-driven and focused on delivering a measurable return on your investment.",
+                icon: <TrendingUp className="w-8 h-8 text-brand-600" />
+              }
+            ].map((item, idx) => (
+              <div key={idx} className="group p-8 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-brand-200 dark:hover:border-brand-900/30 transition-all hover:shadow-xl hover:shadow-brand-500/5">
+                <div className="w-16 h-16 bg-brand-50 dark:bg-brand-900/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  {item.icon}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{item.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -2776,11 +2921,11 @@ function AppContent() {
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-24 bg-slate-50">
+      <section id="services" className="py-24 bg-slate-50 dark:bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">High-Impact Services</h2>
-            <p className="text-slate-600">We offer a comprehensive suite of social media marketing tools and services designed to scale your business.</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white mb-4">High-Impact Services</h2>
+            <p className="text-slate-600 dark:text-slate-400">We offer a comprehensive suite of social media marketing tools and services designed to scale your business.</p>
           </div>
 
           <motion.div 
@@ -2823,15 +2968,15 @@ function AppContent() {
               }
             ].map((service, idx) => (
               <motion.div key={idx} variants={itemVariants}>
-                <Card className="h-full hover:shadow-lg transition-shadow border-none shadow-sm">
+                <Card className="h-full hover:shadow-lg transition-shadow border-none shadow-sm bg-white dark:bg-slate-900">
                   <CardHeader>
-                    <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center mb-4">
+                    <div className="w-12 h-12 bg-brand-50 dark:bg-brand-900/20 rounded-xl flex items-center justify-center mb-4">
                       {service.icon}
                     </div>
-                    <CardTitle className="font-display">{service.title}</CardTitle>
+                    <CardTitle className="font-display text-slate-900 dark:text-white">{service.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-slate-600 text-base">{service.desc}</CardDescription>
+                    <CardDescription className="text-slate-600 dark:text-slate-400 text-base">{service.desc}</CardDescription>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -2841,13 +2986,13 @@ function AppContent() {
       </section>
 
       {/* Process Section */}
-      <section id="process" className="py-24">
+      <section id="process" className="py-24 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <Badge className="mb-4 bg-brand-100 text-brand-700 hover:bg-brand-100 border-none">Our Workflow</Badge>
-              <h2 className="text-4xl font-display font-bold text-slate-900 mb-6">From Strategy to Success: Unveiling Our Effective Process</h2>
-              <p className="text-slate-600 mb-8">We follow a systematic approach to ensure every campaign we run delivers maximum value to our clients.</p>
+              <Badge className="mb-4 bg-brand-100 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 hover:bg-brand-100 border-none">Our Workflow</Badge>
+              <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white mb-6">From Strategy to Success: Unveiling Our Effective Process</h2>
+              <p className="text-slate-600 dark:text-slate-400 mb-8">We follow a systematic approach to ensure every campaign we run delivers maximum value to our clients.</p>
               
               <div className="space-y-8">
                 {[
@@ -2857,12 +3002,12 @@ function AppContent() {
                   { step: "04", title: "Optimization", desc: "Continuous monitoring and adjustments for peak performance." }
                 ].map((item, idx) => (
                   <div key={idx} className="flex gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-lg">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-brand-200 dark:shadow-none">
                       {item.step}
                     </div>
                     <div>
-                      <h3 className="font-display font-bold text-slate-900 text-xl mb-1">{item.title}</h3>
-                      <p className="text-slate-600">{item.desc}</p>
+                      <h3 className="font-display font-bold text-slate-900 dark:text-white text-xl mb-1">{item.title}</h3>
+                      <p className="text-slate-600 dark:text-slate-400">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -2872,17 +3017,17 @@ function AppContent() {
               <img 
                 src="https://picsum.photos/seed/process/800/1000" 
                 alt="Process Illustration" 
-                className="rounded-3xl shadow-2xl"
+                className="rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute -bottom-8 -left-8 bg-white p-6 rounded-2xl shadow-xl max-w-xs hidden md:block border border-slate-100">
+              <div className="absolute -bottom-8 -left-8 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-xl max-w-xs hidden md:block border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="text-green-600 w-6 h-6" />
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="text-green-600 dark:text-green-400 w-6 h-6" />
                   </div>
-                  <span className="font-bold text-slate-900">Quality Guaranteed</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Quality Guaranteed</span>
                 </div>
-                <p className="text-sm text-slate-500">Our process has been refined over 5 years of serving 1000+ businesses globally.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Our process has been refined over 5 years of serving 1000+ businesses globally.</p>
               </div>
             </div>
           </div>
@@ -2890,11 +3035,11 @@ function AppContent() {
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials" className="py-24 bg-brand-50">
+      <section id="testimonials" className="py-24 bg-brand-50 dark:bg-slate-900/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">What Our Clients Say</h2>
-            <p className="text-slate-600">Join 1000+ companies that have switched to KIT GIZMO for their SMM needs.</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white mb-4">What Our Clients Say</h2>
+            <p className="text-slate-600 dark:text-slate-400">Join 1000+ companies that have switched to KIT GIZMO for their SMM needs.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -2902,7 +3047,7 @@ function AppContent() {
               {
                 name: "Sarah Johnson",
                 role: "Marketing Director",
-                content: "Dazzone transformed our Instagram presence. Our engagement increased by 300% in just three months!",
+                content: "KIT GIZMO transformed our Instagram presence. Our engagement increased by 300% in just three months!",
                 avatar: "https://picsum.photos/seed/user1/100/100"
               },
               {
@@ -2918,17 +3063,17 @@ function AppContent() {
                 avatar: "https://picsum.photos/seed/user3/100/100"
               }
             ].map((testimonial, idx) => (
-              <Card key={idx} className="border-none shadow-sm">
+              <Card key={idx} className="border-none shadow-sm bg-white dark:bg-slate-900">
                 <CardContent className="pt-8">
                   <div className="flex gap-1 mb-4">
                     {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />)}
                   </div>
-                  <p className="text-slate-700 italic mb-6">"{testimonial.content}"</p>
+                  <p className="text-slate-700 dark:text-slate-300 italic mb-6">"{testimonial.content}"</p>
                   <div className="flex items-center gap-4">
-                    <img src={testimonial.avatar} alt={testimonial.name} className="w-12 h-12 rounded-full" referrerPolicy="no-referrer" />
+                    <img src={testimonial.avatar} alt={testimonial.name} className="w-12 h-12 rounded-full border border-slate-100 dark:border-slate-800" referrerPolicy="no-referrer" />
                     <div>
-                      <div className="font-bold text-slate-900">{testimonial.name}</div>
-                      <div className="text-sm text-slate-500">{testimonial.role}</div>
+                      <div className="font-bold text-slate-900 dark:text-white">{testimonial.name}</div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">{testimonial.role}</div>
                     </div>
                   </div>
                 </CardContent>
@@ -2938,36 +3083,120 @@ function AppContent() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-24 bg-white dark:bg-slate-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <Badge variant="outline" className="mb-4 border-brand-200 dark:border-brand-900/30 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-3 py-1">
+              Simple Pricing
+            </Badge>
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 dark:text-white mb-6">Plans for Every Business</h2>
+            <p className="text-slate-600 dark:text-slate-400 text-lg">
+              Choose the perfect plan to accelerate your social media growth. No hidden fees.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Starter",
+                price: "49",
+                desc: "Perfect for small businesses starting their journey.",
+                features: ["3 Social Profiles", "10 Posts per Month", "Basic Analytics", "Email Support"],
+                button: "Get Started",
+                popular: false
+              },
+              {
+                name: "Professional",
+                price: "149",
+                desc: "Ideal for growing brands needing more impact.",
+                features: ["10 Social Profiles", "Daily Posting", "Advanced Analytics", "Priority Support", "Custom Strategy"],
+                button: "Most Popular",
+                popular: true
+              },
+              {
+                name: "Enterprise",
+                price: "499",
+                desc: "Full-scale solution for large organizations.",
+                features: ["Unlimited Profiles", "Unlimited Posting", "Real-time Dashboard", "24/7 Dedicated Manager", "Content Creation"],
+                button: "Contact Sales",
+                popular: false
+              }
+            ].map((plan, idx) => (
+              <Card key={idx} className={cn(
+                "relative border-none shadow-lg transition-all hover:-translate-y-1",
+                plan.popular ? "bg-brand-600 text-white scale-105 z-10" : "bg-white dark:bg-slate-900"
+              )}>
+                {plan.popular && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-yellow-400 text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    Most Popular
+                  </div>
+                )}
+                <CardHeader className="p-8">
+                  <CardTitle className={cn("text-2xl font-display", plan.popular ? "text-white" : "text-slate-900 dark:text-white")}>
+                    {plan.name}
+                  </CardTitle>
+                  <div className="mt-4 flex items-baseline">
+                    <span className="text-4xl font-bold tracking-tight">$</span>
+                    <span className="text-6xl font-bold tracking-tight">{plan.price}</span>
+                    <span className={cn("ml-1 text-sm font-medium", plan.popular ? "text-brand-100" : "text-slate-500")}>/month</span>
+                  </div>
+                  <CardDescription className={cn("mt-4", plan.popular ? "text-brand-100" : "text-slate-500 dark:text-slate-400")}>
+                    {plan.desc}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-8 pt-0">
+                  <ul className="space-y-4">
+                    {plan.features.map((feature, fIdx) => (
+                      <li key={fIdx} className="flex items-center gap-3">
+                        <CheckCircle2 className={cn("w-5 h-5", plan.popular ? "text-brand-200" : "text-brand-600")} />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className={cn(
+                    "w-full mt-8 h-12 font-bold rounded-xl",
+                    plan.popular ? "bg-white text-brand-600 hover:bg-brand-50" : "bg-brand-600 text-white hover:bg-brand-700"
+                  )}>
+                    {plan.button}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
-      <section id="faq" className="py-24">
+      <section id="faq" className="py-24 bg-white dark:bg-slate-950">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-display font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-slate-600">Got questions? We've got answers.</p>
+            <h2 className="text-3xl font-display font-bold text-slate-900 dark:text-white mb-4">Frequently Asked Questions</h2>
+            <p className="text-slate-600 dark:text-slate-400">Got questions? We've got answers.</p>
           </div>
 
           <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1">
-              <AccordionTrigger className="text-left font-display font-semibold">How long does it take to see results?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
+            <AccordionItem value="item-1" className="border-slate-100 dark:border-slate-800">
+              <AccordionTrigger className="text-left font-display font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">How long does it take to see results?</AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 While some improvements can be seen immediately, significant organic growth typically takes 3-6 months of consistent strategy execution.
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-2">
-              <AccordionTrigger className="text-left font-display font-semibold">Do you handle all social media platforms?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
+            <AccordionItem value="item-2" className="border-slate-100 dark:border-slate-800">
+              <AccordionTrigger className="text-left font-display font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">Do you handle all social media platforms?</AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 Yes, we specialize in Instagram, Facebook, Twitter (X), LinkedIn, TikTok, and Pinterest. We tailor our approach for each platform's unique audience.
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-3">
-              <AccordionTrigger className="text-left font-display font-semibold">Can I choose specific services or do I need a package?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
+            <AccordionItem value="item-3" className="border-slate-100 dark:border-slate-800">
+              <AccordionTrigger className="text-left font-display font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">Can I choose specific services or do I need a package?</AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 We offer both pre-defined packages for common needs and custom-tailored solutions for specific business requirements.
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-4">
-              <AccordionTrigger className="text-left font-display font-semibold">Is there a long-term contract?</AccordionTrigger>
-              <AccordionContent className="text-slate-600">
+            <AccordionItem value="item-4" className="border-slate-100 dark:border-slate-800">
+              <AccordionTrigger className="text-left font-display font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">Is there a long-term contract?</AccordionTrigger>
+              <AccordionContent className="text-slate-600 dark:text-slate-400">
                 We offer flexible month-to-month options as well as discounted long-term partnerships. We believe our results should keep you with us, not a contract.
               </AccordionContent>
             </AccordionItem>
@@ -2996,8 +3225,72 @@ function AppContent() {
         </div>
       </section>
 
+      {/* Contact Section */}
+      <section id="contact" className="py-24 bg-slate-50 dark:bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16">
+            <div>
+              <Badge variant="outline" className="mb-4 border-brand-200 dark:border-brand-900/30 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-3 py-1">
+                Contact Us
+              </Badge>
+              <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white mb-6">Let's Build Something Great Together</h2>
+              <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
+                Have questions about our services or need a custom solution? Our team of experts is here to help you scale your brand.
+              </p>
+              
+              <div className="space-y-6">
+                {[
+                  { icon: <Mail className="w-5 h-5" />, label: "Email Us", value: "support@kitgizmo.com" },
+                  { icon: <Phone className="w-5 h-5" />, label: "Call Us", value: "+1 (555) 000-0000" },
+                  { icon: <MapPin className="w-5 h-5" />, label: "Visit Us", value: "123 Marketing Ave, New York, NY" }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800 text-brand-600">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</div>
+                      <div className="text-slate-900 dark:text-white font-medium">{item.value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <Card className="border-none shadow-xl bg-white dark:bg-slate-900 p-8">
+              <form className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">First Name</label>
+                    <Input placeholder="John" className="bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-900 dark:text-white">Last Name</label>
+                    <Input placeholder="Doe" className="bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-900 dark:text-white">Email Address</label>
+                  <Input type="email" placeholder="john@example.com" className="bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-900 dark:text-white">Message</label>
+                  <textarea 
+                    className="w-full min-h-[120px] rounded-md border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-white"
+                    placeholder="How can we help you?"
+                  />
+                </div>
+                <Button className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold h-12 rounded-xl">
+                  Send Message
+                </Button>
+              </form>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="bg-slate-950 text-slate-400 py-16">
+      <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="col-span-2 md:col-span-1">
@@ -3008,7 +3301,7 @@ function AppContent() {
                 <span className="text-xl font-display font-bold tracking-tight text-white">KIT GIZMO</span>
               </div>
               <p className="text-sm leading-relaxed mb-6">
-                Professional Social Media Marketing Solution for businesses looking to scale their online presence and engagement.
+                Professional SMM Agency based in the USA. We help businesses scale their online presence through data-driven strategies.
               </p>
               <div className="flex gap-4">
                 <a href="#" className="hover:text-brand-400 transition-colors"><Instagram className="w-5 h-5" /></a>
@@ -3019,30 +3312,30 @@ function AppContent() {
             </div>
             
             <div>
-              <h4 className="text-white font-display font-bold mb-6">Services</h4>
+              <h4 className="text-white font-display font-bold mb-6 uppercase text-xs tracking-widest">Services</h4>
               <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Social Strategy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Content Creation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Growth Hacking</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Analytics</a></li>
+                <li><a href="#" className="hover:text-brand-400 transition-colors">Social Strategy</a></li>
+                <li><a href="#" className="hover:text-brand-400 transition-colors">Content Creation</a></li>
+                <li><a href="#" className="hover:text-brand-400 transition-colors">Growth Hacking</a></li>
+                <li><a href="#" className="hover:text-brand-400 transition-colors">Analytics</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-display font-bold mb-6">Company</h4>
+              <h4 className="text-white font-display font-bold mb-6 uppercase text-xs tracking-widest">Company</h4>
               <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Our Team</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Testimonials</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-brand-400 transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-brand-400 transition-colors">Our Team</a></li>
+                <li><a href="#" className="hover:text-brand-400 transition-colors">Testimonials</a></li>
+                <li><a href="#" className="hover:text-brand-400 transition-colors">Contact</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-white font-display font-bold mb-6">Newsletter</h4>
+              <h4 className="text-white font-display font-bold mb-6 uppercase text-xs tracking-widest">Newsletter</h4>
               <p className="text-sm mb-4">Get the latest SMM tips and tricks.</p>
               <div className="flex gap-2">
-                <Input placeholder="Email address" className="bg-slate-900 border-slate-800 text-white" />
+                <Input placeholder="Email address" className="bg-slate-900 border-slate-800 text-white focus:border-brand-600 transition-colors" />
                 <Button size="icon" className="bg-brand-600 hover:bg-brand-700 shrink-0">
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -3052,12 +3345,12 @@ function AppContent() {
           
           <Separator className="bg-slate-900 mb-8" />
           
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest font-bold">
             <p>© 2026 KIT GIZMO SMM Agency. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
+              <a href="#" className="hover:text-brand-400 transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-brand-400 transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-brand-400 transition-colors">Cookie Policy</a>
             </div>
           </div>
         </div>
