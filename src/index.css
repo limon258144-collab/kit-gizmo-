@@ -16,6 +16,11 @@
   --color-brand-800: #074e85;
   --color-brand-900: #0c426e;
   --color-brand-950: #082a4a;
+
+  --color-premium-dark: #0a0c10;
+  --color-premium-card: #12151c;
+  --color-premium-border: rgba(255, 255, 255, 0.08);
+  --color-premium-glow: rgba(14, 145, 233, 0.15);
 }
 
 @layer base {
@@ -27,6 +32,18 @@
 
 .glass-card {
   @apply bg-white/80 backdrop-blur-md border border-slate-200/50 shadow-sm;
+}
+
+.premium-card {
+  @apply bg-gradient-to-br from-slate-900 to-slate-950 border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] rounded-[16px] transition-all duration-300;
+}
+
+.premium-card:hover {
+  @apply -translate-y-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)];
+}
+
+.premium-card-glow:hover {
+  @apply shadow-[0_0_30px_rgba(14,145,233,0.15)];
 }
 
 .hero-gradient {

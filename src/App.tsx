@@ -51,7 +51,9 @@ import {
   Camera,
   Upload,
   Sun,
-  Moon
+  Moon,
+  Target,
+  MinusCircle
 } from "lucide-react";
 import { useState, useEffect, createContext, useContext, ReactNode, FormEvent, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -306,7 +308,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-function LoginDialog({ className }: { className?: string }) {
+function LoginDialog({ className, label = "Login" }: { className?: string; label?: ReactNode }) {
   const { signIn, signInWithEmail, signUpWithEmail } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -356,7 +358,7 @@ function LoginDialog({ className }: { className?: string }) {
       <DialogTrigger
         render={
           <Button variant="default" className={cn("bg-brand-600 hover:bg-brand-700", className)}>
-            Login
+            {label}
           </Button>
         }
       />
@@ -463,6 +465,15 @@ const itemVariants = {
       ease: "easeOut",
     },
   },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5 }
+  }
 };
 
 export default function App() {
@@ -2680,9 +2691,9 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen font-sans bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen font-sans bg-white dark:bg-[#0a0c10] text-slate-900 dark:text-slate-100">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
+      <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#0a0c10]/80 backdrop-blur-md border-b border-slate-100 dark:border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-2">
@@ -2692,40 +2703,23 @@ function AppContent() {
               <span className="text-xl font-display font-bold tracking-tight text-brand-950 dark:text-white">KIT GIZMO</span>
             </div>
             
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#services" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Services</a>
-              <a href="#process" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Process</a>
-              <a href="#pricing" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Pricing</a>
-              <a href="#testimonials" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Testimonials</a>
-              <a href="#faq" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">FAQ</a>
-              <a href="#contact" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Contact</a>
-              
-              <button 
-                onClick={toggleTheme}
-                className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
-              >
-                {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              </button>
-              
+            <div className="hidden md:flex items-center gap-3">
               {loading ? (
                 <div className="w-24 h-9 bg-slate-100 animate-pulse rounded-md" />
               ) : user ? (
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <img src={user.photoURL || ""} alt="" className="w-8 h-8 rounded-full border border-slate-200" referrerPolicy="no-referrer" />
-                    <span className="text-sm font-medium text-slate-700 hidden lg:block">{user.displayName || user.email?.split('@')[0]}</span>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 hidden lg:block">{user.displayName || user.email?.split('@')[0]}</span>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={logout} className="text-slate-600 hover:text-red-600">
+                  <Button variant="ghost" size="sm" onClick={logout} className="text-slate-600 dark:text-slate-400 hover:text-red-600">
                     <LogOut className="w-4 h-4 mr-2" /> Logout
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" className="text-slate-600 hover:text-brand-600 hidden sm:flex">
-                    Get Started
-                  </Button>
-                  <LoginDialog />
+                <div className="flex items-center gap-6">
+                  <LoginDialog label="Login" className="bg-transparent text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 shadow-none border-none font-medium" />
+                  <LoginDialog label="Sign Up" className="bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl px-6 shadow-lg shadow-brand-500/20" />
                 </div>
               )}
             </div>
@@ -2745,12 +2739,25 @@ function AppContent() {
             animate={{ opacity: 1, y: 0 }}
             className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-4 space-y-4"
           >
-            <a href="#services" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Services</a>
-            <a href="#process" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Process</a>
-            <a href="#pricing" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Pricing</a>
-            <a href="#testimonials" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Testimonials</a>
-            <a href="#faq" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>FAQ</a>
-            <a href="#contact" className="block text-base font-medium text-slate-600 dark:text-slate-400" onClick={() => setIsMenuOpen(false)}>Contact</a>
+            {user ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                  <img src={user.photoURL || ""} alt="" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+                  <div>
+                    <div className="font-bold text-slate-900 dark:text-white">{user.displayName || user.email?.split('@')[0]}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">{user.email}</div>
+                  </div>
+                </div>
+                <Button variant="outline" className="w-full text-red-600 border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={logout}>
+                  <LogOut className="w-4 h-4 mr-2" /> Logout
+                </Button>
+              </div>
+            ) : (
+              <LoginDialog 
+                className="w-full justify-start h-10 px-0 bg-transparent text-slate-600 dark:text-slate-400 hover:bg-transparent shadow-none border-none"
+                label="Login / Sign Up"
+              />
+            )}
             
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
               <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Theme</span>
@@ -2761,598 +2768,209 @@ function AppContent() {
                 {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
             </div>
-
-            {user ? (
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-4">
-                  <img src={user.photoURL || ""} alt="" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
-                  <div>
-                    <div className="font-bold text-slate-900">{user.displayName || user.email?.split('@')[0]}</div>
-                    <div className="text-sm text-slate-500">{user.email}</div>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full text-red-600 border-red-100 hover:bg-red-50" onClick={logout}>
-                  Logout
-                </Button>
-              </div>
-            ) : (
-              <div className="pt-4 border-t border-slate-100 space-y-3">
-                <Button variant="outline" className="w-full text-slate-600">
-                  Get Started
-                </Button>
-                <LoginDialog className="w-full" />
-              </div>
-            )}
           </motion.div>
         )}
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-white dark:bg-slate-950">
+      <section className="relative min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden bg-white dark:bg-[#0a0c10]">
         <div className="absolute inset-0 hero-gradient -z-10 opacity-50 dark:opacity-20" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <Badge variant="outline" className="mb-4 border-brand-200 dark:border-brand-900/30 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-3 py-1">
-              #1 SMM Agency Solution in the USA
-            </Badge>
-            <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-slate-900 dark:text-white mb-6">
-              Elevate Your <span className="text-brand-600">Social Media</span> Presence
-            </h1>
-            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Empowering your social media success with high-impact services, data-driven strategies, and professional management.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="h-12 px-8 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-200 dark:shadow-none transition-all hover:scale-105">
-                Get Started Now <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-              <a href="#pricing">
-                <Button size="lg" variant="outline" className="h-12 px-8 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-xl">
-                  View Pricing
-                </Button>
-              </a>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="mt-16 relative"
-          >
-            <div className="relative mx-auto max-w-5xl">
-              <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
-                <img 
-                  src="https://picsum.photos/seed/dashboard/1200/600" 
-                  alt="Dashboard Preview" 
-                  className="rounded-xl w-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              {/* Decorative elements */}
-              <div className="absolute -top-6 -right-6 w-24 h-24 bg-brand-100 rounded-full blur-3xl -z-10" />
-              <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-brand-200 rounded-full blur-3xl -z-10" />
-            </div>
-          </motion.div>
-
-          {/* Trusted By */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5, duration: 1 }}
-            className="mt-24"
-          >
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.3em] mb-8">Trusted by industry leaders</p>
-            <div className="flex flex-wrap justify-center items-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-              {["TechFlow", "GlobalScale", "NextGen", "CloudNine", "PeakPerformance"].map((logo, i) => (
-                <div key={i} className="text-2xl font-display font-black text-slate-400 dark:text-slate-600 tracking-tighter">
-                  {logo}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 bg-slate-950 dark:bg-black border-y border-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 text-center">
-            {[
-              { label: "Active Clients", value: "10k+" },
-              { label: "Orders Completed", value: "1M+" },
-              { label: "Success Rate", value: "99.9%" },
-              { label: "Support Response", value: "< 5m" }
-            ].map((stat, idx) => (
-              <div key={idx} className="space-y-3">
-                <div className="text-5xl font-display font-bold text-white tracking-tight">{stat.value}</div>
-                <div className="text-xs text-brand-400 uppercase tracking-[0.2em] font-bold">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section className="py-24 bg-white dark:bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <Badge variant="outline" className="mb-4 border-brand-200 dark:border-brand-900/30 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-3 py-1">
-              The KIT GIZMO Advantage
-            </Badge>
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 dark:text-white mb-6">Why Industry Leaders Trust Us</h2>
-            <p className="text-slate-600 dark:text-slate-400 text-lg">
-              We combine cutting-edge technology with human expertise to deliver results that matter.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              {
-                title: "USA-Based Support",
-                desc: "Our dedicated support team is based in the USA, providing 24/7 assistance with local expertise.",
-                icon: <Globe className="w-8 h-8 text-brand-600" />
-              },
-              {
-                title: "Enterprise Security",
-                desc: "We prioritize your data security with military-grade encryption and secure payment gateways.",
-                icon: <Shield className="w-8 h-8 text-brand-600" />
-              },
-              {
-                title: "Proven ROI",
-                desc: "Our strategies are data-driven and focused on delivering a measurable return on your investment.",
-                icon: <TrendingUp className="w-8 h-8 text-brand-600" />
-              }
-            ].map((item, idx) => (
-              <div key={idx} className="group p-8 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-brand-200 dark:hover:border-brand-900/30 transition-all hover:shadow-xl hover:shadow-brand-500/5">
-                <div className="w-16 h-16 bg-brand-50 dark:bg-brand-900/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  {item.icon}
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{item.title}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section id="services" className="py-24 bg-slate-50 dark:bg-slate-900/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white mb-4">High-Impact Services</h2>
-            <p className="text-slate-600 dark:text-slate-400">We offer a comprehensive suite of social media marketing tools and services designed to scale your business.</p>
-          </div>
-
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-8"
-          >
-            {[
-              {
-                title: "Social Strategy",
-                desc: "Custom-tailored strategies to align with your business goals and target audience.",
-                icon: <Zap className="w-6 h-6 text-brand-600" />
-              },
-              {
-                title: "Content Creation",
-                desc: "Engaging visuals and copy that resonate with your followers and drive interaction.",
-                icon: <MessageSquare className="w-6 h-6 text-brand-600" />
-              },
-              {
-                title: "Growth Hacking",
-                desc: "Proven techniques to rapidly increase your follower count and brand awareness.",
-                icon: <Rocket className="w-6 h-6 text-brand-600" />
-              },
-              {
-                title: "Analytics & Reporting",
-                desc: "Detailed insights and performance tracking to measure your ROI effectively.",
-                icon: <BarChart3 className="w-6 h-6 text-brand-600" />
-              },
-              {
-                title: "Community Management",
-                desc: "Professional handling of comments, messages, and audience engagement.",
-                icon: <Users className="w-6 h-6 text-brand-600" />
-              },
-              {
-                title: "Global Reach",
-                desc: "Expand your brand presence across multiple platforms and international markets.",
-                icon: <Globe className="w-6 h-6 text-brand-600" />
-              }
-            ].map((service, idx) => (
-              <motion.div key={idx} variants={itemVariants}>
-                <Card className="h-full hover:shadow-lg transition-shadow border-none shadow-sm bg-white dark:bg-slate-900">
-                  <CardHeader>
-                    <div className="w-12 h-12 bg-brand-50 dark:bg-brand-900/20 rounded-xl flex items-center justify-center mb-4">
-                      {service.icon}
-                    </div>
-                    <CardTitle className="font-display text-slate-900 dark:text-white">{service.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-slate-600 dark:text-slate-400 text-base">{service.desc}</CardDescription>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Process Section */}
-      <section id="process" className="py-24 bg-white dark:bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <Badge className="mb-4 bg-brand-100 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 hover:bg-brand-100 border-none">Our Workflow</Badge>
-              <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white mb-6">From Strategy to Success: Unveiling Our Effective Process</h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-8">We follow a systematic approach to ensure every campaign we run delivers maximum value to our clients.</p>
-              
-              <div className="space-y-8">
-                {[
-                  { step: "01", title: "Discovery & Audit", desc: "We analyze your current presence and identify growth opportunities." },
-                  { step: "02", title: "Strategy Development", desc: "Crafting a unique roadmap tailored to your specific brand needs." },
-                  { step: "03", title: "Execution & Management", desc: "Our team takes over the daily operations and content delivery." },
-                  { step: "04", title: "Optimization", desc: "Continuous monitoring and adjustments for peak performance." }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-brand-200 dark:shadow-none">
-                      {item.step}
-                    </div>
-                    <div>
-                      <h3 className="font-display font-bold text-slate-900 dark:text-white text-xl mb-1">{item.title}</h3>
-                      <p className="text-slate-600 dark:text-slate-400">{item.desc}</p>
-                    </div>
-                  </div>
+            <div className="flex flex-col items-center gap-3 mb-8">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Trusted by <span className="text-slate-900 dark:text-white font-bold">1K+ Members</span> with a 5-Star Rating
+              </p>
             </div>
-            <div className="relative">
-              <img 
-                src="https://picsum.photos/seed/process/800/1000" 
-                alt="Process Illustration" 
-                className="rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800"
-                referrerPolicy="no-referrer"
+            <h1 className="text-6xl md:text-8xl font-display font-extrabold tracking-tight text-slate-900 dark:text-white mb-12">
+              Elevate Your Social Media Presence
+            </h1>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <LoginDialog 
+                label="Get Started"
+                className="h-16 px-16 text-xl text-white font-bold rounded-2xl shadow-2xl shadow-brand-500/20 dark:shadow-none transition-all hover:scale-105 bg-brand-600 hover:bg-brand-700"
               />
-              <div className="absolute -bottom-8 -left-8 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-xl max-w-xs hidden md:block border border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="text-green-600 dark:text-green-400 w-6 h-6" />
-                  </div>
-                  <span className="font-bold text-slate-900 dark:text-white">Quality Guaranteed</span>
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Our process has been refined over 5 years of serving 1000+ businesses globally.</p>
-              </div>
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Comparison Section */}
+      <section className="py-32 bg-[#0a0c10] relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <motion.h2 
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1 }}
+              className="text-4xl md:text-6xl font-display font-extrabold text-orange-500 mb-6"
+            >
+              Why Choose KIT GIZMO?
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, delay: 0.3 }}
+              className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto font-medium"
+            >
+              See how our AI-powered advertising stacks up against traditional methods.
+            </motion.p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+            {/* Traditional Ads */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="premium-card p-10"
+            >
+              <h3 className="text-2xl font-display font-bold text-white mb-8">Traditional Ads</h3>
+              <motion.ul 
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={{
+                  visible: { transition: { staggerChildren: 0.2, delayChildren: 0.5 } }
+                }}
+                className="space-y-6"
+              >
+                <motion.li variants={listItemVariants} className="flex items-center gap-4 text-slate-400">
+                  <div className="w-6 h-6 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
+                    <MinusCircle className="w-4 h-4 text-red-500" />
+                  </div>
+                  <span className="text-lg">Low engagement rates</span>
+                </motion.li>
+                <motion.li variants={listItemVariants} className="flex items-center gap-4 text-slate-400">
+                  <div className="w-6 h-6 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
+                    <MinusCircle className="w-4 h-4 text-red-500" />
+                  </div>
+                  <span className="text-lg">High bounce rate (60%+)</span>
+                </motion.li>
+              </motion.ul>
+            </motion.div>
+
+            {/* AI Ads */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="premium-card premium-card-glow p-10 relative overflow-hidden border-brand-500/30"
+            >
+              <div className="absolute top-6 right-6">
+                <Badge className="bg-brand-600 text-white font-bold border-none shadow-[0_0_15px_rgba(2,115,199,0.5)]">RECOMMENDED</Badge>
+              </div>
+              <h3 className="text-2xl font-display font-bold text-white mb-8">KIT GIZMO AI Ads</h3>
+              <motion.ul 
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={{
+                  visible: { transition: { staggerChildren: 0.2, delayChildren: 0.5 } }
+                }}
+                className="space-y-6"
+              >
+                <motion.li variants={listItemVariants} className="flex items-center gap-4 text-brand-100">
+                  <div className="w-6 h-6 rounded-full bg-brand-500/20 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-brand-400" />
+                  </div>
+                  <span className="text-lg font-medium">90% More Sales Chance</span>
+                </motion.li>
+                <motion.li variants={listItemVariants} className="flex items-center gap-4 text-brand-100">
+                  <div className="w-6 h-6 rounded-full bg-brand-500/20 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-brand-400" />
+                  </div>
+                  <span className="text-lg font-medium">Precision AI Targeting</span>
+                </motion.li>
+                <motion.li variants={listItemVariants} className="flex items-center gap-4 text-brand-100">
+                  <div className="w-6 h-6 rounded-full bg-brand-500/20 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-brand-400" />
+                  </div>
+                  <span className="text-lg font-medium">High User Retentivity</span>
+                </motion.li>
+              </motion.ul>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="py-24 bg-brand-50 dark:bg-slate-900/30">
+      {/* Trusted Metrics Section */}
+      <section className="py-32 bg-[#0a0c10]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white mb-4">What Our Clients Say</h2>
-            <p className="text-slate-600 dark:text-slate-400">Join 1000+ companies that have switched to KIT GIZMO for their SMM needs.</p>
+            <h2 className="text-2xl font-display font-bold text-white uppercase tracking-widest opacity-50">Trusted by Thousands</h2>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              {
-                name: "Sarah Johnson",
-                role: "Marketing Director",
-                content: "KIT GIZMO transformed our Instagram presence. Our engagement increased by 300% in just three months!",
-                avatar: "https://picsum.photos/seed/user1/100/100"
-              },
-              {
-                name: "Michael Chen",
-                role: "E-commerce Founder",
-                content: "The analytics reports are incredibly detailed. I finally know exactly where my marketing budget is going.",
-                avatar: "https://picsum.photos/seed/user2/100/100"
-              },
-              {
-                name: "Elena Rodriguez",
-                role: "Brand Manager",
-                content: "Professional, responsive, and creative. They truly understand our brand voice and audience.",
-                avatar: "https://picsum.photos/seed/user3/100/100"
-              }
-            ].map((testimonial, idx) => (
-              <Card key={idx} className="border-none shadow-sm bg-white dark:bg-slate-900">
-                <CardContent className="pt-8">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />)}
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 italic mb-6">"{testimonial.content}"</p>
-                  <div className="flex items-center gap-4">
-                    <img src={testimonial.avatar} alt={testimonial.name} className="w-12 h-12 rounded-full border border-slate-100 dark:border-slate-800" referrerPolicy="no-referrer" />
-                    <div>
-                      <div className="font-bold text-slate-900 dark:text-white">{testimonial.name}</div>
-                      <div className="text-sm text-slate-500 dark:text-slate-400">{testimonial.role}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              { label: "Active Users", value: "50K+", icon: Users },
+              { label: "Ads Generated", value: "1.2M", icon: Zap },
+              { label: "Avg. ROI", value: "340%", icon: TrendingUp },
+              { label: "Global Reach", value: "120+", icon: Globe }
+            ].map((stat, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="premium-card p-8 text-center"
+              >
+                <div className="w-12 h-12 bg-brand-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <stat.icon className="w-6 h-6 text-brand-500" />
+                </div>
+                <div className="text-3xl font-display font-bold text-white mb-1">{stat.value}</div>
+                <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">{stat.label}</div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-24 bg-white dark:bg-slate-950">
+      {/* Features Section */}
+      <section className="py-24 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <Badge variant="outline" className="mb-4 border-brand-200 dark:border-brand-900/30 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-3 py-1">
-              Simple Pricing
-            </Badge>
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 dark:text-white mb-6">Plans for Every Business</h2>
-            <p className="text-slate-600 dark:text-slate-400 text-lg">
-              Choose the perfect plan to accelerate your social media growth. No hidden fees.
-            </p>
-          </div>
+          <div className="grid md:grid-cols-3 gap-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex flex-col items-center text-center group"
+            >
+              <div className="w-16 h-16 bg-brand-50 dark:bg-brand-900/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Target className="w-8 h-8 text-brand-600 dark:text-brand-400" />
+              </div>
+              <h4 className="text-xl font-display font-bold text-slate-900 dark:text-white mb-3">Smart Targeting</h4>
+              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                Our AI finds buyers, not just visitors. We analyze user behavior in real-time to ensure your ads reach the most relevant audience.
+              </p>
+            </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                name: "Starter",
-                price: "49",
-                desc: "Perfect for small businesses starting their journey.",
-                features: ["3 Social Profiles", "10 Posts per Month", "Basic Analytics", "Email Support"],
-                button: "Get Started",
-                popular: false
-              },
-              {
-                name: "Professional",
-                price: "149",
-                desc: "Ideal for growing brands needing more impact.",
-                features: ["10 Social Profiles", "Daily Posting", "Advanced Analytics", "Priority Support", "Custom Strategy"],
-                button: "Most Popular",
-                popular: true
-              },
-              {
-                name: "Enterprise",
-                price: "499",
-                desc: "Full-scale solution for large organizations.",
-                features: ["Unlimited Profiles", "Unlimited Posting", "Real-time Dashboard", "24/7 Dedicated Manager", "Content Creation"],
-                button: "Contact Sales",
-                popular: false
-              }
-            ].map((plan, idx) => (
-              <Card key={idx} className={cn(
-                "relative border-none shadow-lg transition-all hover:-translate-y-1",
-                plan.popular ? "bg-brand-600 text-white scale-105 z-10" : "bg-white dark:bg-slate-900"
-              )}>
-                {plan.popular && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-yellow-400 text-slate-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    Most Popular
-                  </div>
-                )}
-                <CardHeader className="p-8">
-                  <CardTitle className={cn("text-2xl font-display", plan.popular ? "text-white" : "text-slate-900 dark:text-white")}>
-                    {plan.name}
-                  </CardTitle>
-                  <div className="mt-4 flex items-baseline">
-                    <span className="text-4xl font-bold tracking-tight">$</span>
-                    <span className="text-6xl font-bold tracking-tight">{plan.price}</span>
-                    <span className={cn("ml-1 text-sm font-medium", plan.popular ? "text-brand-100" : "text-slate-500")}>/month</span>
-                  </div>
-                  <CardDescription className={cn("mt-4", plan.popular ? "text-brand-100" : "text-slate-500 dark:text-slate-400")}>
-                    {plan.desc}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-8 pt-0">
-                  <ul className="space-y-4">
-                    {plan.features.map((feature, fIdx) => (
-                      <li key={fIdx} className="flex items-center gap-3">
-                        <CheckCircle2 className={cn("w-5 h-5", plan.popular ? "text-brand-200" : "text-brand-600")} />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className={cn(
-                    "w-full mt-8 h-12 font-bold rounded-xl",
-                    plan.popular ? "bg-white text-brand-600 hover:bg-brand-50" : "bg-brand-600 text-white hover:bg-brand-700"
-                  )}>
-                    {plan.button}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            {/* Additional features could go here if needed, but the request only specified one feature item */}
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="py-24 bg-white dark:bg-slate-950">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-display font-bold text-slate-900 dark:text-white mb-4">Frequently Asked Questions</h2>
-            <p className="text-slate-600 dark:text-slate-400">Got questions? We've got answers.</p>
-          </div>
-
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1" className="border-slate-100 dark:border-slate-800">
-              <AccordionTrigger className="text-left font-display font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">How long does it take to see results?</AccordionTrigger>
-              <AccordionContent className="text-slate-600 dark:text-slate-400">
-                While some improvements can be seen immediately, significant organic growth typically takes 3-6 months of consistent strategy execution.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-2" className="border-slate-100 dark:border-slate-800">
-              <AccordionTrigger className="text-left font-display font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">Do you handle all social media platforms?</AccordionTrigger>
-              <AccordionContent className="text-slate-600 dark:text-slate-400">
-                Yes, we specialize in Instagram, Facebook, Twitter (X), LinkedIn, TikTok, and Pinterest. We tailor our approach for each platform's unique audience.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3" className="border-slate-100 dark:border-slate-800">
-              <AccordionTrigger className="text-left font-display font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">Can I choose specific services or do I need a package?</AccordionTrigger>
-              <AccordionContent className="text-slate-600 dark:text-slate-400">
-                We offer both pre-defined packages for common needs and custom-tailored solutions for specific business requirements.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-4" className="border-slate-100 dark:border-slate-800">
-              <AccordionTrigger className="text-left font-display font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400">Is there a long-term contract?</AccordionTrigger>
-              <AccordionContent className="text-slate-600 dark:text-slate-400">
-                We offer flexible month-to-month options as well as discounted long-term partnerships. We believe our results should keep you with us, not a contract.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 bg-brand-600 relative overflow-hidden">
-        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-brand-400 rounded-full blur-3xl opacity-50" />
-        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-brand-800 rounded-full blur-3xl opacity-50" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">Ready to Dazzle the World?</h2>
-          <p className="text-brand-100 text-lg mb-10 max-w-2xl mx-auto">
-            Join hundreds of successful brands and start your social media growth journey today. Our experts are ready to help.
+      {/* Minimal Footer */}
+      <footer className="py-8 border-t border-slate-100 dark:border-slate-900">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">
+            © 2026 KIT GIZMO. All rights reserved.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" variant="secondary" className="h-12 px-8 text-brand-600 font-bold">
-              Get Started Now
-            </Button>
-            <Button size="lg" variant="outline" className="h-12 px-8 text-white border-white hover:bg-white/10">
-              Contact Sales
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section id="contact" className="py-24 bg-slate-50 dark:bg-slate-900/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16">
-            <div>
-              <Badge variant="outline" className="mb-4 border-brand-200 dark:border-brand-900/30 text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-3 py-1">
-                Contact Us
-              </Badge>
-              <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white mb-6">Let's Build Something Great Together</h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
-                Have questions about our services or need a custom solution? Our team of experts is here to help you scale your brand.
-              </p>
-              
-              <div className="space-y-6">
-                {[
-                  { icon: <Mail className="w-5 h-5" />, label: "Email Us", value: "support@kitgizmo.com" },
-                  { icon: <Phone className="w-5 h-5" />, label: "Call Us", value: "+1 (555) 000-0000" },
-                  { icon: <MapPin className="w-5 h-5" />, label: "Visit Us", value: "123 Marketing Ave, New York, NY" }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800 text-brand-600">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.label}</div>
-                      <div className="text-slate-900 dark:text-white font-medium">{item.value}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <Card className="border-none shadow-xl bg-white dark:bg-slate-900 p-8">
-              <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900 dark:text-white">First Name</label>
-                    <Input placeholder="John" className="bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900 dark:text-white">Last Name</label>
-                    <Input placeholder="Doe" className="bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-900 dark:text-white">Email Address</label>
-                  <Input type="email" placeholder="john@example.com" className="bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-900 dark:text-white">Message</label>
-                  <textarea 
-                    className="w-full min-h-[120px] rounded-md border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-white"
-                    placeholder="How can we help you?"
-                  />
-                </div>
-                <Button className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold h-12 rounded-xl">
-                  Send Message
-                </Button>
-              </form>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="text-white w-5 h-5" />
-                </div>
-                <span className="text-xl font-display font-bold tracking-tight text-white">KIT GIZMO</span>
-              </div>
-              <p className="text-sm leading-relaxed mb-6">
-                Professional SMM Agency based in the USA. We help businesses scale their online presence through data-driven strategies.
-              </p>
-              <div className="flex gap-4">
-                <a href="#" className="hover:text-brand-400 transition-colors"><Instagram className="w-5 h-5" /></a>
-                <a href="#" className="hover:text-brand-400 transition-colors"><Twitter className="w-5 h-5" /></a>
-                <a href="#" className="hover:text-brand-400 transition-colors"><Facebook className="w-5 h-5" /></a>
-                <a href="#" className="hover:text-brand-400 transition-colors"><Linkedin className="w-5 h-5" /></a>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="text-white font-display font-bold mb-6 uppercase text-xs tracking-widest">Services</h4>
-              <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-brand-400 transition-colors">Social Strategy</a></li>
-                <li><a href="#" className="hover:text-brand-400 transition-colors">Content Creation</a></li>
-                <li><a href="#" className="hover:text-brand-400 transition-colors">Growth Hacking</a></li>
-                <li><a href="#" className="hover:text-brand-400 transition-colors">Analytics</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-display font-bold mb-6 uppercase text-xs tracking-widest">Company</h4>
-              <ul className="space-y-4 text-sm">
-                <li><a href="#" className="hover:text-brand-400 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-brand-400 transition-colors">Our Team</a></li>
-                <li><a href="#" className="hover:text-brand-400 transition-colors">Testimonials</a></li>
-                <li><a href="#" className="hover:text-brand-400 transition-colors">Contact</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-display font-bold mb-6 uppercase text-xs tracking-widest">Newsletter</h4>
-              <p className="text-sm mb-4">Get the latest SMM tips and tricks.</p>
-              <div className="flex gap-2">
-                <Input placeholder="Email address" className="bg-slate-900 border-slate-800 text-white focus:border-brand-600 transition-colors" />
-                <Button size="icon" className="bg-brand-600 hover:bg-brand-700 shrink-0">
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          <Separator className="bg-slate-900 mb-8" />
-          
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest font-bold">
-            <p>© 2026 KIT GIZMO SMM Agency. All rights reserved.</p>
-            <div className="flex gap-6">
-              <a href="#" className="hover:text-brand-400 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-brand-400 transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-brand-400 transition-colors">Cookie Policy</a>
-            </div>
-          </div>
         </div>
       </footer>
     </div>
